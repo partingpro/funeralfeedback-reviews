@@ -5,23 +5,19 @@
 </head>
 <body>
   <div id="form-container">Loading form...</div>
-
   <script>
     const slug = window.location.pathname.replace("/", "");
-    const airtableUrl = "https://api.airtable.com/v0/app6N6wbWgCv0KZkD/Reviews?fields[]=slug&fields[]=jotform_url";
-
-    fetch(airtableUrl, {
+    fetch("https://api.airtable.com/v0/app6N6wbWgCv0KZkD/Reviews?maxRecords=100&view=Grid%20view", {
       headers: {
         Authorization: "Bearer pat8SBGIjsOWCW112.dd04a03b4bee06fbe5f30ebc9121badb9bfca7db04c2cc3008145480969a2919"
       }
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
-      const record = data.records.find(r => r.fields.slug === slug);
-      if (record) {
-        const formURL = record.fields.jotform_url;
-        document.getElementById('form-container').innerHTML =
-          `<iframe src="${formURL}" width="100%" height="800px" frameborder="0"></iframe>`;
+      const match = data.records.find(r => r.fields.slug === slug);
+      if (match) {
+        document.getElementById('form-container').innerHTML = 
+          `<iframe src="${match.fields.jotform_url}" width="100%" height="800px" frameborder="0"></iframe>`;
       } else {
         document.getElementById('form-container').innerText = "Form not found.";
       }
