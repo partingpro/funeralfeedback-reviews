@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Funeral Feedback Review</title>
+</head>
+<body>
+  <div id="form-container">Loading review form...</div>
+
+  <script>
+    const slug = window.location.pathname.replace("/", "");
+
+    fetch('/forms.json')
+      .then(response => response.json())
+      .then(forms => {
+        const formURL = forms[slug];
+        if (formURL) {
+          document.getElementById('form-container').innerHTML = 
+            `<iframe src="${formURL}" width="100%" height="800px" frameborder="0"></iframe>`;
+        } else {
+          document.getElementById('form-container').innerText = 
+            "Review form not found. Please check your link.";
+        }
+      });
+  </script>
+</body>
+</html>
