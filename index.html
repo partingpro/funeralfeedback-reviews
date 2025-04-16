@@ -1,26 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Funeral Feedback Review</title>
+  <title>Funeral Feedback</title>
 </head>
 <body>
-  <div id="form-container">Loading review form...</div>
+  <div id="form-container">Loading form...</div>
 
   <script>
     const slug = window.location.pathname.replace("/", "");
+    const airtableUrl = "https://api.airtable.com/v0/app6N6wbWgCv0KZkD/Reviews?fields[]=slug&fields[]=jotform_url";
 
-    fetch('/forms.json')
-      .then(response => response.json())
-      .then(forms => {
-        const formURL = forms[slug];
-        if (formURL) {
-          document.getElementById('form-container').innerHTML = 
-            `<iframe src="${formURL}" width="100%" height="800px" frameborder="0"></iframe>`;
-        } else {
-          document.getElementById('form-container').innerText = 
-            "Review form not found. Please check your link.";
-        }
-      });
+    fetch(airtableUrl, {
+      headers: {
+        Authorization: "Bearer pat8SBGIjsOWCW112.dd04a03b4bee06fbe5f30ebc9121badb9bfca7db04c2cc3008145480969a2919"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const record = data.records.find(r => r.fields.slug === slug);
+      if (record) {
+        const formURL = record.fields.jotform_url;
+        document.getElementById('form-container').innerHTML =
+          `<iframe src="${formURL}" width="100%" height="800px" frameborder="0"></iframe>`;
+      } else {
+        document.getElementById('form-container').innerText = "Form not found.";
+      }
+    })
+    .catch(err => {
+      document.getElementById('form-container').innerText = "Error loading form.";
+      console.error(err);
+    });
   </script>
 </body>
 </html>
