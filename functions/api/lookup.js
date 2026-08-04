@@ -10,6 +10,15 @@ export async function onRequestGet({ request, env }) {
     return Response.json({ jotform_url: null }, { status: 400 });
   }
 
+  // Airtable's own response time (~500-650ms) is the dominant cost of this
+  // lookup. slug -> jotform_url mappings are set once at onboarding and
+  // almost never change, so cache hits at Cloudflare's edge instead of
+  // re-querying Airtable on every visit.
+  const cache = caches.default;
+  const cacheKey = new Request(request.url, request);
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
   const baseId = env.AIRTABLE_BASE_ID || "app6N6wbWgCv0KZkD";
   const table = env.AIRTABLE_TABLE || "Reviews";
   const formula = encodeURIComponent(`{slug}="${slug}"`);
@@ -21,5 +30,16 @@ export async function onRequestGet({ request, env }) {
   const data = await airtableRes.json();
   const record = data.records && data.records[0];
 
-  return Response.json({ jotform_url: record ? record.fields.jotform_url : null });
+  const response = Response.json(
+    { jotform_url: record ? record.fields.jotform_url : null },
+    { headers: { "Cache-Control": "public, max-age=1800" } }
+  );
+
+  // Only cache confirmed matches — never cache a "not found", in case the
+  // slug was just added in Airtable and hasn't replicated yet.
+  if (record) {
+    await cache.put(cacheKey, response.clone());
+  }
+
+  return response;
 }
